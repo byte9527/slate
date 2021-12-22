@@ -1,15 +1,14 @@
-import React, { useMemo, useCallback, useRef, useEffect, useState } from 'react'
-import { Editor, Transforms, Range, createEditor, Descendant } from 'slate'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { createEditor, Descendant, Editor, Range, Transforms } from 'slate'
 import { withHistory } from 'slate-history'
 import {
-  Slate,
   Editable,
   ReactEditor,
-  withReact,
-  useSelected,
+  Slate,
   useFocused,
+  useSelected,
+  withReact,
 } from 'slate-react'
-
 import { Portal } from '../components'
 import { MentionElement } from './custom-types'
 
@@ -70,74 +69,81 @@ const MentionExample = () => {
     }
   }, [chars.length, editor, index, search, target])
 
+  window.e = editor
+  console.log(value, editor)
+  debugger
+
   return (
-    <Slate
-      editor={editor}
-      value={value}
-      onChange={value => {
-        setValue(value)
-        const { selection } = editor
+    <>
+      <Slate
+        editor={editor}
+        value={value}
+        onChange={value => {
+          setValue(value)
+          const { selection } = editor
 
-        if (selection && Range.isCollapsed(selection)) {
-          const [start] = Range.edges(selection)
-          const wordBefore = Editor.before(editor, start, { unit: 'word' })
-          const before = wordBefore && Editor.before(editor, wordBefore)
-          const beforeRange = before && Editor.range(editor, before, start)
-          const beforeText = beforeRange && Editor.string(editor, beforeRange)
-          const beforeMatch = beforeText && beforeText.match(/^@(\w+)$/)
-          const after = Editor.after(editor, start)
-          const afterRange = Editor.range(editor, start, after)
-          const afterText = Editor.string(editor, afterRange)
-          const afterMatch = afterText.match(/^(\s|$)/)
+          if (selection && Range.isCollapsed(selection)) {
+            const [start] = Range.edges(selection)
+            const wordBefore = Editor.before(editor, start, { unit: 'word' })
+            const before = wordBefore && Editor.before(editor, wordBefore)
+            const beforeRange = before && Editor.range(editor, before, start)
+            const beforeText = beforeRange && Editor.string(editor, beforeRange)
+            const beforeMatch = beforeText && beforeText.match(/^@(\w+)$/)
+            const after = Editor.after(editor, start)
+            const afterRange = Editor.range(editor, start, after)
+            const afterText = Editor.string(editor, afterRange)
+            const afterMatch = afterText.match(/^(\s|$)/)
 
-          if (beforeMatch && afterMatch) {
-            setTarget(beforeRange)
-            setSearch(beforeMatch[1])
-            setIndex(0)
-            return
+            if (beforeMatch && afterMatch) {
+              setTarget(beforeRange)
+              setSearch(beforeMatch[1])
+              setIndex(0)
+              return
+            }
           }
-        }
 
-        setTarget(null)
-      }}
-    >
-      <Editable
-        renderElement={renderElement}
-        onKeyDown={onKeyDown}
-        placeholder="Enter some text..."
-      />
-      {target && chars.length > 0 && (
-        <Portal>
-          <div
-            ref={ref}
-            style={{
-              top: '-9999px',
-              left: '-9999px',
-              position: 'absolute',
-              zIndex: 1,
-              padding: '3px',
-              background: 'white',
-              borderRadius: '4px',
-              boxShadow: '0 1px 5px rgba(0,0,0,.2)',
-            }}
-            data-cy="mentions-portal"
-          >
-            {chars.map((char, i) => (
-              <div
-                key={char}
-                style={{
-                  padding: '1px 3px',
-                  borderRadius: '3px',
-                  background: i === index ? '#B4D5FF' : 'transparent',
-                }}
-              >
-                {char}
-              </div>
-            ))}
-          </div>
-        </Portal>
-      )}
-    </Slate>
+          setTarget(null)
+        }}
+      >
+        <Editable
+          renderElement={renderElement}
+          onKeyDown={onKeyDown}
+          placeholder="Enter some text..."
+        />
+        {target && chars.length > 0 && (
+          <Portal>
+            <div
+              ref={ref}
+              style={{
+                top: '-9999px',
+                left: '-9999px',
+                position: 'absolute',
+                zIndex: 1,
+                padding: '3px',
+                background: 'white',
+                borderRadius: '4px',
+                boxShadow: '0 1px 5px rgba(0,0,0,.2)',
+              }}
+              data-cy="mentions-portal"
+            >
+              {chars.map((char, i) => (
+                <div
+                  key={char}
+                  style={{
+                    padding: '1px 3px',
+                    borderRadius: '3px',
+                    background: i === index ? '#B4D5FF' : 'transparent',
+                  }}
+                >
+                  {char}
+                </div>
+              ))}
+            </div>
+          </Portal>
+        )}
+      </Slate>
+      <pre>{JSON.stringify(value, null, 2)}</pre>
+    </>
   )
 }
 
@@ -204,31 +210,52 @@ const initialValue: Descendant[] = [
   {
     type: 'paragraph',
     children: [
-      {
-        text:
-          'This example shows how you might implement a simple @-mentions feature that lets users autocomplete mentioning a user by their username. Which, in this case means Star Wars characters. The mentions are rendered as void inline elements inside the document.',
-      },
-    ],
-  },
-  {
-    type: 'paragraph',
-    children: [
-      { text: 'Try mentioning characters, like ' },
+      { text: '!' },
       {
         type: 'mention',
         character: 'R2-D2',
         children: [{ text: '' }],
       },
-      { text: ' or ' },
-      {
-        type: 'mention',
-        character: 'Mace Windu',
-        children: [{ text: '' }],
-      },
+      // { text: ' or ' },
+      // {
+      //   type: 'mention',
+      //   character: 'Mace Windu',
+      //   children: [{ text: '' }],
+      // },
       { text: '!' },
     ],
   },
 ]
+
+// const initialValue: Descendant[] = [
+//   {
+//     type: 'paragraph',
+//     children: [
+//       {
+//         text:
+//           'This example shows how you might implement a simple @-mentions feature that lets users autocomplete mentioning a user by their username. Which, in this case means Star Wars characters. The mentions are rendered as void inline elements inside the document.',
+//       },
+//     ],
+//   },
+//   {
+//     type: 'paragraph',
+//     children: [
+//       { text: 'Try mentioning characters, like ' },
+//       {
+//         type: 'mention',
+//         character: 'R2-D2',
+//         children: [{ text: '' }],
+//       },
+//       { text: ' or ' },
+//       {
+//         type: 'mention',
+//         character: 'Mace Windu',
+//         children: [{ text: '' }],
+//       },
+//       { text: '!' },
+//     ],
+//   },
+// ]
 
 const CHARACTERS = [
   'Aayla Secura',

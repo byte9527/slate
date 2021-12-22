@@ -69,3 +69,5 @@ export const HAS_BEFORE_INPUT_SUPPORT =
   globalThis.InputEvent &&
   // @ts-ignore The `getTargetRanges` property isn't recognized.
   typeof globalThis.InputEvent.prototype.getTargetRanges === 'function'
+
+export const IS_DEBUGGING = true

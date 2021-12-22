@@ -1,38 +1,24 @@
-import React, { useEffect, useRef, useMemo, useCallback, useState } from 'react'
-import {
-  Editor,
-  Element,
-  NodeEntry,
-  Node,
-  Range,
-  Text,
-  Transforms,
-  Path,
-} from 'slate'
 import getDirection from 'direction'
 import debounce from 'lodash/debounce'
 import throttle from 'lodash/throttle'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import scrollIntoView from 'scroll-into-view-if-needed'
-
-import useChildren from '../hooks/use-children'
-import Hotkeys from '../utils/hotkeys'
 import {
-  HAS_BEFORE_INPUT_SUPPORT,
-  IS_IOS,
-  IS_CHROME,
-  IS_FIREFOX,
-  IS_FIREFOX_LEGACY,
-  IS_QQBROWSER,
-  IS_SAFARI,
-  IS_UC_MOBILE,
-  IS_WECHATBROWSER,
-  CAN_USE_DOM,
-} from '../utils/environment'
+  Editor,
+  Element,
+  Node,
+  NodeEntry,
+  Path,
+  Range,
+  Text,
+  Transforms,
+} from 'slate'
 import { ReactEditor } from '..'
+import useChildren from '../hooks/use-children'
+import { DecorateContext } from '../hooks/use-decorate'
+import { useIsomorphicLayoutEffect } from '../hooks/use-isomorphic-layout-effect'
 import { ReadOnlyContext } from '../hooks/use-read-only'
 import { useSlate } from '../hooks/use-slate'
-import { useIsomorphicLayoutEffect } from '../hooks/use-isomorphic-layout-effect'
-import { DecorateContext } from '../hooks/use-decorate'
 import {
   DOMElement,
   DOMNode,
@@ -42,15 +28,28 @@ import {
   isDOMNode,
   isPlainTextOnlyPaste,
 } from '../utils/dom'
-
+import {
+  CAN_USE_DOM,
+  HAS_BEFORE_INPUT_SUPPORT,
+  IS_CHROME,
+  IS_DEBUGGING,
+  IS_FIREFOX,
+  IS_FIREFOX_LEGACY,
+  IS_IOS,
+  IS_QQBROWSER,
+  IS_SAFARI,
+  IS_UC_MOBILE,
+  IS_WECHATBROWSER,
+} from '../utils/environment'
+import Hotkeys from '../utils/hotkeys'
 import {
   EDITOR_TO_ELEMENT,
+  EDITOR_TO_WINDOW,
   ELEMENT_TO_NODE,
+  IS_FOCUSED,
   IS_READ_ONLY,
   NODE_TO_ELEMENT,
-  IS_FOCUSED,
   PLACEHOLDER_SYMBOL,
-  EDITOR_TO_WINDOW,
 } from '../utils/weak-maps'
 
 type DeferredOperation = () => void
@@ -106,6 +105,12 @@ export type EditableProps = {
   as?: React.ElementType
 } & React.TextareaHTMLAttributes<HTMLDivElement>
 
+const logger = IS_DEBUGGING
+  ? (eventName: string, data?: any) => {
+      console.log(eventName, data)
+    }
+  : (eventName: string, data?: any) => {}
+
 /**
  * Editable.
  */
@@ -126,6 +131,8 @@ export const Editable = (props: EditableProps) => {
     ...attributes
   } = props
   const editor = useSlate()
+  logger('render', editor)
+
   // Rerender editor when composition status changed
   const [isComposing, setIsComposing] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -144,6 +151,10 @@ export const Editable = (props: EditableProps) => {
     }),
     []
   )
+
+  useIsomorphicLayoutEffect(() => {
+    logger('layouteffect')
+  })
 
   // Whenever the editor updates...
   useIsomorphicLayoutEffect(() => {
@@ -263,6 +274,7 @@ export const Editable = (props: EditableProps) => {
   // while a selection is being dragged.
   const onDOMSelectionChange = useCallback(
     throttle(() => {
+      logger('selectionchangethrottled')
       if (
         !state.isComposing &&
         !state.isUpdatingSelection &&
@@ -317,6 +329,7 @@ export const Editable = (props: EditableProps) => {
   // https://github.com/facebook/react/issues/11211
   const onDOMBeforeInput = useCallback(
     (event: InputEvent) => {
+      logger('beforeinput', event)
       if (
         !readOnly &&
         hasEditableTarget(editor, event.target) &&

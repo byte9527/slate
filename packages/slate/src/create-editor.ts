@@ -30,6 +30,7 @@ export const createEditor = (): Editor => {
     onChange: () => {},
 
     apply: (op: Operation) => {
+      console.trace(`🚀 > createEditor > op`, op)
       for (const ref of Editor.pathRefs(editor)) {
         PathRef.transform(ref, op)
       }

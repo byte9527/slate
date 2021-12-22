@@ -1,18 +1,17 @@
 import React, { useRef } from 'react'
-import { Range, Element, Text as SlateText } from 'slate'
-
-import Leaf from './leaf'
+import { Element, Range, Text as SlateText } from 'slate'
 import { ReactEditor, useSlateStatic } from '..'
-import { RenderLeafProps, RenderPlaceholderProps } from './editable'
-import { useIsomorphicLayoutEffect } from '../hooks/use-isomorphic-layout-effect'
-import {
-  NODE_TO_ELEMENT,
-  ELEMENT_TO_NODE,
-  EDITOR_TO_KEY_TO_ELEMENT,
-} from '../utils/weak-maps'
-import { isDecoratorRangeListEqual } from '../utils/range-list'
 import { useContentKey } from '../hooks/use-content-key'
+import { useIsomorphicLayoutEffect } from '../hooks/use-isomorphic-layout-effect'
 import { IS_ANDROID } from '../utils/environment'
+import { isDecoratorRangeListEqual } from '../utils/range-list'
+import {
+  EDITOR_TO_KEY_TO_ELEMENT,
+  ELEMENT_TO_NODE,
+  NODE_TO_ELEMENT,
+} from '../utils/weak-maps'
+import { RenderLeafProps, RenderPlaceholderProps } from './editable'
+import Leaf from './leaf'
 
 /**
  * Text.
