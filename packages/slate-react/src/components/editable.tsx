@@ -105,11 +105,7 @@ export type EditableProps = {
   as?: React.ElementType
 } & React.TextareaHTMLAttributes<HTMLDivElement>
 
-const logger = IS_DEBUGGING
-  ? (eventName: string, data?: any) => {
-      console.log(eventName, data)
-    }
-  : (eventName: string, data?: any) => {}
+const logger = IS_DEBUGGING ? console.log : () => {}
 
 /**
  * Editable.
@@ -131,7 +127,7 @@ export const Editable = (props: EditableProps) => {
     ...attributes
   } = props
   const editor = useSlate()
-  logger('render', editor)
+  logger('render', editor.children)
 
   // Rerender editor when composition status changed
   const [isComposing, setIsComposing] = useState(false)
@@ -274,7 +270,11 @@ export const Editable = (props: EditableProps) => {
   // while a selection is being dragged.
   const onDOMSelectionChange = useCallback(
     throttle(() => {
-      logger('selectionchangethrottled')
+      logger(
+        'selectionchangethrottled',
+        ReactEditor.findDocumentOrShadowRoot(editor).getSelection()
+      )
+      console.log(`🚀 > throttle > state.isComposing`, state.isComposing)
       if (
         !state.isComposing &&
         !state.isUpdatingSelection &&
@@ -548,6 +548,23 @@ export const Editable = (props: EditableProps) => {
     }
   }, [onDOMBeforeInput])
 
+  useIsomorphicLayoutEffect(() => {
+    const h = (e: any) => {
+      console.log('compositionend (real)', e)
+    }
+    if (ref.current) {
+      // @ts-ignore The `beforeinput` event isn't recognized.
+      ref.current.addEventListener('compositionend', h)
+    }
+
+    return () => {
+      if (ref.current) {
+        // @ts-ignore The `beforeinput` event isn't recognized.
+        ref.current.removeEventListener('compositionend', h)
+      }
+    }
+  }, [])
+
   // Attach a native DOM event handler for `selectionchange`, because React's
   // built-in `onSelect` handler doesn't fire for all selection changes. It's a
   // leaky polyfill that only fires on keypresses or clicks. Instead, we want to
@@ -636,6 +653,7 @@ export const Editable = (props: EditableProps) => {
           }}
           onBeforeInput={useCallback(
             (event: React.FormEvent<HTMLDivElement>) => {
+              logger('beforeinput(react)', event.nativeEvent)
               // COMPAT: Certain browsers don't support the `beforeinput` event, so we
               // fall back to React's leaky polyfill instead just for it. It
               // only works for the `insertText` input type.
@@ -655,6 +673,7 @@ export const Editable = (props: EditableProps) => {
             [readOnly]
           )}
           onInput={useCallback((event: React.SyntheticEvent) => {
+            logger('input', event.nativeEvent)
             // Flush native operations, as native events will have propogated
             // and we can correctly compare DOM text values in components
             // to stop rendering, so that browser functions like autocorrect
@@ -666,6 +685,7 @@ export const Editable = (props: EditableProps) => {
           }, [])}
           onBlur={useCallback(
             (event: React.FocusEvent<HTMLDivElement>) => {
+              logger('blur', event.nativeEvent)
               if (
                 readOnly ||
                 state.isUpdatingSelection ||
@@ -770,6 +790,7 @@ export const Editable = (props: EditableProps) => {
           )}
           onCompositionEnd={useCallback(
             (event: React.CompositionEvent<HTMLDivElement>) => {
+              logger('compositionend', event.nativeEvent)
               if (
                 hasEditableTarget(editor, event.target) &&
                 !isEventHandled(event, attributes.onCompositionEnd)
@@ -798,6 +819,7 @@ export const Editable = (props: EditableProps) => {
           )}
           onCompositionUpdate={useCallback(
             (event: React.CompositionEvent<HTMLDivElement>) => {
+              logger('compositionupdate', event.nativeEvent)
               if (
                 hasEditableTarget(editor, event.target) &&
                 !isEventHandled(event, attributes.onCompositionUpdate)
@@ -810,6 +832,7 @@ export const Editable = (props: EditableProps) => {
           )}
           onCompositionStart={useCallback(
             (event: React.CompositionEvent<HTMLDivElement>) => {
+              logger('compositionstart', event.nativeEvent)
               if (
                 hasEditableTarget(editor, event.target) &&
                 !isEventHandled(event, attributes.onCompositionStart)
@@ -965,6 +988,7 @@ export const Editable = (props: EditableProps) => {
           )}
           onFocus={useCallback(
             (event: React.FocusEvent<HTMLDivElement>) => {
+              logger('focus', event.nativeEvent)
               if (
                 !readOnly &&
                 !state.isUpdatingSelection &&
@@ -990,6 +1014,7 @@ export const Editable = (props: EditableProps) => {
           )}
           onKeyDown={useCallback(
             (event: React.KeyboardEvent<HTMLDivElement>) => {
+              logger('keydown', event.nativeEvent)
               if (
                 !readOnly &&
                 !state.isComposing &&
@@ -1226,6 +1251,7 @@ export const Editable = (props: EditableProps) => {
                         Editor.isVoid(editor, currentNode) &&
                         Editor.isInline(editor, currentNode)
                       ) {
+                        console.log('BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB')
                         event.preventDefault()
                         Editor.deleteBackward(editor, { unit: 'block' })
 

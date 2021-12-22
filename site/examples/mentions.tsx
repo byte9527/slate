@@ -30,6 +30,7 @@ const MentionExample = () => {
 
   const onKeyDown = useCallback(
     event => {
+      console.log(`🚀 > MentionExample > target`, target)
       if (target) {
         switch (event.key) {
           case 'ArrowDown':
@@ -69,10 +70,6 @@ const MentionExample = () => {
     }
   }, [chars.length, editor, index, search, target])
 
-  window.e = editor
-  console.log(value, editor)
-  debugger
-
   return (
     <>
       <Slate
@@ -95,6 +92,7 @@ const MentionExample = () => {
             const afterMatch = afterText.match(/^(\s|$)/)
 
             if (beforeMatch && afterMatch) {
+              console.log('ssssssssssssssssss')
               setTarget(beforeRange)
               setSearch(beforeMatch[1])
               setIndex(0)
@@ -102,7 +100,7 @@ const MentionExample = () => {
             }
           }
 
-          setTarget(null)
+          // setTarget(null)
         }}
       >
         <Editable
@@ -142,6 +140,7 @@ const MentionExample = () => {
           </Portal>
         )}
       </Slate>
+      <pre>{JSON.stringify(editor.selection)}</pre>
       <pre>{JSON.stringify(value, null, 2)}</pre>
     </>
   )
