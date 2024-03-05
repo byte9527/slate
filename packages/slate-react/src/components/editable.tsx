@@ -130,6 +130,7 @@ export const Editable = (props: EditableProps) => {
   const [isComposing, setIsComposing] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const deferredOperations = useRef<DeferredOperation[]>([])
+  const isInputHandle = useRef(false)
 
   // Update internal state on each render.
   IS_READ_ONLY.set(editor, readOnly)
@@ -507,6 +508,7 @@ export const Editable = (props: EditableProps) => {
               } else {
                 Editor.insertText(editor, data)
               }
+              isInputHandle.current = true
             }
 
             break
@@ -624,7 +626,7 @@ export const Editable = (props: EditableProps) => {
           onBeforeInput={useCallback(
             (event: React.FormEvent<HTMLDivElement>) => {
               // COMPAT: Certain browsers don't support the `beforeinput` event, so we
-              // fall back to React's leaky polyfill instead just for it. It
+              // fall back to React's leaky polyfill instead just for it. 
               // only works for the `insertText` input type.
               if (
                 !HAS_BEFORE_INPUT_SUPPORT &&
@@ -649,6 +651,7 @@ export const Editable = (props: EditableProps) => {
             for (const op of deferredOperations.current) {
               op()
             }
+            isInputHandle.current = false
             deferredOperations.current = []
           }, [])}
           onBlur={useCallback(
@@ -769,19 +772,16 @@ export const Editable = (props: EditableProps) => {
                 // type that we need. So instead, insert whenever a composition
                 // ends since it will already have been committed to the DOM.
                 if (
-                  !IS_SAFARI &&
-                  !IS_FIREFOX_LEGACY &&
-                  !IS_IOS &&
-                  !IS_QQBROWSER &&
-                  !IS_WECHATBROWSER &&
-                  !IS_UC_MOBILE &&
+                  HAS_BEFORE_INPUT_SUPPORT &&
+                  !isInputHandle.current &&
+                  !readOnly &&
                   event.data
                 ) {
                   Editor.insertText(editor, event.data)
                 }
               }
             },
-            [attributes.onCompositionEnd]
+            [attributes.onCompositionEnd, readOnly]
           )}
           onCompositionUpdate={useCallback(
             (event: React.CompositionEvent<HTMLDivElement>) => {
